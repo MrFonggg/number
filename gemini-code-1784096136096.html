@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數字互化大對決 (心算強化雙人版)</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --panel-bg: rgba(255, 255, 255, 0.1);
+            --p1-color: #ff4757;
+            --p2-color: #2ed573;
+            --text-color: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        /* 遊戲容器 */
+        #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 頂部工具列 */
+        .top-bar {
+            height: 50px;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 10;
+        }
+
+        .game-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #eccc68;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: #2ed573;
+            padding: 5px 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(46, 213, 115, 0.5);
+        }
+
+        .top-btn {
+            background: #ffa502;
+            color: #fff;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+            transition: 0.2s;
+        }
+
+        .top-btn:hover {
+            transform: scale(1.05);
+            background: #ff7f50;
+        }
+
+        /* 開始/主目錄畫面 */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #2f3542 0%, #1e272e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .screen.hidden {
+            display: none !important;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #eccc68;
+            margin-bottom: 10px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            color: #a4b0be;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: white;
+            font-size: 1.8rem;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+            transition: 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.6);
+        }
+
+        .btn-rule {
+            background: #2ed573;
+            color: white;
+            font-size: 1.2rem;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(46, 213, 115, 0.3);
+            transition: 0.2s;
+        }
+
+        /* 規則說明畫面彈窗 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .modal.hidden {
+            display: none !important;
+        }
+
+        .modal-content {
+            background: #2f3542;
+            width: 80%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #eccc68;
+            text-align: left;
+        }
+
+        .modal-content h2 {
+            color: #eccc68;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .modal-content ul {
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .btn-close {
+            display: block;
+            margin: 20px auto 0;
+            background: #ffa502;
+            border: none;
+            padding: 10px 30px;
+            color: white;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* 戰鬥主介面（分欄） */
+        .battle-arena {
+            flex: 1;
+            display: flex;
+            width: 100%;
+            height: calc(100% - 50px);
+        }
+
+        .player-side {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            position: relative;
+        }
+
+        #p1-side {
+            border-right: 3px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(180deg, #2c3e50 0%, #0f2027 100%);
+        }
+
+        #p2-side {
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        /* 資訊面板 */
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .role-badge {
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 5px 15px;
+            border-radius: 5px;
+        }
+
+        .p1-badge { background: var(--p1-color); }
+        .p2-badge { background: var(--p2-color); }
+
+        .stat-group {
+            font-size: 1.1rem;
+        }
+
+        .score-val {
+            color: #eccc68;
+            font-weight: bold;
+        }
+
+        .combo-badge {
+            background: #ffa502;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-left: 5px;
+            display: none;
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
+
+        /* 血量條 */
+        .hp-bar-container {
+            margin: 5px 0;
+        }
+        .hp-label {
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .hp-track {
+            background: #747d8c;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .hp-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.3s ease-in-out;
+        }
+        .player-hp .hp-fill { background: #2ed573; }
+        .monster-hp .hp-fill { background: #ff4757; }
+
+        /* 戰鬥區動畫 */
+        .battle-visual {
+            flex: 1;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+            min-height: 140px;
+        }
+
+        .character {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .avatar {
+            font-size: 4rem;
+        }
+
+        .char-label {
+            margin-top: 5px;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* 攻擊動畫效果 */
+        .attack-effect {
+            position: absolute;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff4757;
+            text-shadow: 0 0 10px #000;
+            animation: floatUp 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+
+        /* 題目區 */
+        .question-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .question-text {
+            font-size: 2.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .blank-space {
+            display: inline-block;
+            min-width: 120px;
+            border-bottom: 4px solid #ffa502;
+            color: #ffa502;
+            padding: 0 10px;
+            text-align: center;
+        }
+
+        /* 答題選項 */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .btn-option {
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-option:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #ffa502;
+        }
+
+        .btn-option.selected {
+            background: #ffa502;
+            color: #000;
+            border-color: #ff7f50;
+        }
+
+        /* 控制按鈕 */
+        .controls-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-ctrl {
+            flex: 1;
+            padding: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .btn-cancel {
+            background: #747d8c;
+            color: white;
+        }
+        .btn-cancel:hover { background: #57606f; }
+
+        .btn-confirm {
+            background: #2ed573;
+            color: white;
+        }
+        .btn-confirm:hover { background: #22b85e; }
+
+        /* 回饋動畫特效 */
+        @keyframes flash-correct {
+            0% { background-color: rgba(46, 213, 115, 0.4); }
+            100% { background-color: transparent; }
+        }
+
+        @keyframes flash-wrong {
+            0% { background-color: rgba(255, 71, 87, 0.4); }
+            100% { background-color: transparent; }
+        }
+
+        .flash-correct { animation: flash-correct 0.5s ease-out; }
+        .flash-wrong { animation: flash-wrong 0.5s ease-out; }
+
+        /* 遊戲結束結算畫面 */
+        .result-title {
+            font-size: 3rem;
+            color: #ffa502;
+            margin-bottom: 20px;
+        }
+
+        .result-board {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px 40px;
+            border-radius: 15px;
+            border: 2px solid;
+        }
+
+        .p1-result { border-color: var(--p1-color); }
+        .p2-result { border-color: var(--p2-color); }
+
+        /* RWD 微調 */
+        @media (max-height: 600px) {
+            .question-text { font-size: 1.6rem; }
+            .btn-option { padding: 8px; font-size: 1.2rem; }
+            .battle-visual { min-height: 100px; }
+            .avatar { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 頂部工具列 -->
+    <div class="top-bar">
+        <div class="game-title">⚔️ 數字互化大對決 ⚔️</div>
+        <div class="timer-display" id="global-timer">90s</div>
+        <div>
+            <button class="top-btn" onclick="toggleFullScreen()">全屏模式</button>
+            <button class="top-btn" onclick="returnToMenu()">返回主目錄</button>
+        </div>
+    </div>
+
+    <!-- 戰鬥主介面 -->
+    <div class="battle-arena">
+        <!-- 玩家 1 側 (騎士) -->
+        <div id="p1-side" class="player-side">
+            <div class="info-panel">
+                <span class="role-badge p1-badge">玩家1 騎士 🛡️</span>
+                <div class="stat-group">
+                    得分: <span id="p1-score-val" class="score-val">0</span>
+                    <span id="p1-combo-badge" class="combo-badge">0 Combo</span>
+                </div>
+            </div>
+
+            <!-- HP 條區 -->
+            <div class="hp-bar-container player-hp">
+                <div class="hp-label"><span>騎士 HP</span><span id="p1-hp-txt">100/100</span></div>
+                <div class="hp-track"><div id="p1-hp-fill" class="hp-fill"></div></div>
+            </div>
+            <div class="hp-bar-container monster-hp">
+                <div class="hp-label"><span>怪獸 HP (Lv.<span id="p1-m-lv">1</span>)</span><span id="p1-m-hp-txt">50/50</span></div>
+                <div class="hp-track"><div id="p1-m-hp-fill" class="hp-fill"></div></div>
+            </div>
+
+            <!-- 角色與怪獸視覺區 -->
+            <div class="battle-visual" id="p1-visual">
+                <div class="character" id="p1-char">
+                    <span class="avatar">🧙‍♂️</span>
+                    <span class="char-label">騎士</span>
+                </div>
+                <div class="character" id="p1-monster">
+                    <span class="avatar" id="p1-monster-avatar">👾</span>
+                    <span class="char-label" id="p1-monster-label">小綠妖</span>
+                </div>
+            </div>
+
+            <!-- 題目區 -->
+            <div class="question-card">
+                <div class="question-text" id="p1-q-text">60% = <span class="blank-space" id="p1-blank">______</span></div>
+            </div>
+
+            <!-- 選項 -->
+            <div class="options-grid" id="p1-options">
+                <!-- 動態載入 -->
+            </div>
+
+            <!-- 確認/取消 -->
+            <div class="controls-row">
+                <button class="btn-ctrl btn-cancel" onclick="clearSelection(1)">取消</button>
+                <button class="btn-ctrl btn-confirm" onclick="submitAnswer(1)">確定</button>
+            </div>
+        </div>
+
+        <!-- 玩家 2 側 (法師) -->
+        <div id="p2-side" class="player-side">
+            <div class="info-panel">
+                <span class="role-badge p2-badge">玩家2 法師 🔮</span>
+                <div class="stat-group">
+                    得分: <span id="p2-score-val" class="score-val">0</span>
+                    <span id="p2-combo-badge" class="combo-badge">0 Combo</span>
+                </div>
+            </div>
+
+            <!-- HP 條區 -->
+            <div class="hp-bar-container player-hp">
+                <div class="hp-label"><span>法師 HP</span><span id="p2-hp-txt">100/100</span></div>
+                <div class="hp-track"><div id="p2-hp-fill" class="hp-fill"></div></div>
+            </div>
+            <div class="hp-bar-container monster-hp">
+                <div class="hp-label"><span>怪獸 HP (Lv.<span id="p2-m-lv">1</span>)</span><span id="p2-m-hp-txt">50/50</span></div>
+                <div class="hp-track"><div id="p2-m-hp-fill" class="hp-fill"></div></div>
+            </div>
+
+            <!-- 角色與怪獸視覺區 -->
+            <div class="battle-visual" id="p2-visual">
+                <div class="character" id="p2-char">
+                    <span class="avatar">🧙‍♀️</span>
+                    <span class="char-label">法師</span>
+                </div>
+                <div class="character" id="p2-monster">
+                    <span class="avatar" id="p2-monster-avatar">🐲</span>
+                    <span class="char-label" id="p2-monster-label">噴火龍</span>
+                </div>
+            </div>
+
+            <!-- 題目區 -->
+            <div class="question-card">
+                <div class="question-text" id="p2-q-text">1/4 = <span class="blank-space" id="p2-blank">______</span></div>
+            </div>
+
+            <!-- 選項 -->
+            <div class="options-grid" id="p2-options">
+                <!-- 動態載入 -->
+            </div>
+
+            <!-- 確認/取消 -->
+            <div class="controls-row">
+                <button class="btn-ctrl btn-cancel" onclick="clearSelection(2)">取消</button>
+                <button class="btn-ctrl btn-confirm" onclick="submitAnswer(2)">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 開始主目錄畫面 -->
+    <div id="start-screen" class="screen">
+        <div class="logo">⚔️ 數字互化大對決 ⚔️</div>
+        <div class="subtitle">小學六年級數學挑戰：心算極速互化大冒險</div>
+        <button class="btn-start" onclick="startGame()">開始對決</button>
+        <button class="btn-rule" onclick="showRules(true)">遊戲說明</button>
+    </div>
+
+    <!-- 遊戲說明彈窗 -->
+    <div id="rules-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>📜 遊戲規則與玩法</h2>
+            <ul>
+                <li>本遊戲為 <strong>90秒 雙人分屏對戰</strong>，分別控制<strong>騎士</strong>與<strong>法師</strong>。</li>
+                <li>題目會顯示一個數值（可能是整數、小數、分數或百分數）。</li>
+                <li>從 4 個選項中選出<strong>數值相等</strong>的正確答案，先點選答案填入空格，再按<strong>「確定」</strong>提交。</li>
+                <li><strong>答對：</strong>對怪獸發動攻擊！<strong>連續答對 3 題（Combo >= 3）以上可觸發暴擊（雙倍傷害）</strong>。</li>
+                <li><strong>答錯：</strong>會被怪獸反擊，扣減玩家本身的 HP。</li>
+                <li>打敗怪獸後，會自動召喚出等級更高、血量更多的全新怪獸。</li>
+                <li>時間結束或其中一位玩家生命值歸零時，遊戲結束，分數高者獲勝！</li>
+            </ul>
+            <button class="btn-close" onclick="showRules(false)">我知道了</button>
+        </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="result-screen" class="screen hidden">
+        <div class="result-title">🏆 對決結束 🏆</div>
+        <div class="result-board">
+            <div class="result-card p1-result">
+                <h3>🛡️ 騎士 (玩家1)</h3>
+                <p style="font-size: 1.5rem;">得分: <span id="r1-score" style="color:#eccc68; font-weight:bold;">0</span></p>
+                <p>剩餘 HP: <span id="r1-hp">0</span></p>
+            </div>
+            <div class="result-card p2-result">
+                <h3>🔮 法師 (玩家2)</h3>
+                <p style="font-size: 1.5rem;">得分: <span id="r2-score" style="color:#eccc68; font-weight:bold;">0</span></p>
+                <p>剩餘 HP: <span id="r2-hp">0</span></p>
+            </div>
+        </div>
+        <h2 id="winner-text" style="color: #ffa502; margin-bottom: 30px;"></h2>
+        <div>
+            <button class="btn-start" onclick="startGame()" style="font-size: 1.3rem; padding: 10px 30px; margin-right: 15px;">再玩一次</button>
+            <button class="btn-rule" onclick="returnToMenu()">返回主選單</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 遊戲核心數據狀態
+    const gameState = {
+        timer: 90,
+        timerInterval: null,
+        isPlaying: false,
+        players: {
+            1: {
+                score: 0,
+                hp: 100,
+                combo: 0,
+                selectedAnswer: null,
+                currentQuestion: null,
+                monster: { hp: 50, maxHp: 50, level: 1, name: '小綠妖', icon: '👾' }
+            },
+            2: {
+                score: 0,
+                hp: 100,
+                combo: 0,
+                selectedAnswer: null,
+                currentQuestion: null,
+                monster: { hp: 50, maxHp: 50, level: 1, name: '噴火龍', icon: '🐲' }
+            }
+        }
+    };
+
+    const monsterTemplates = [
+        { name: '小綠妖', icon: '👾' },
+        { name: '獨角獸', icon: '🦄' },
+        { name: '石頭怪', icon: '🗿' },
+        { name: '噴火龍', icon: '🐲' },
+        { name: '幽靈王', icon: '👻' },
+        { name: '機械巨魔', icon: '🤖' }
+    ];
+
+    // 精選「小學必背黃金互化對組」：高頻出現、極易心算
+    const mentalMathPairs = [
+        { f: '1/2', d: '0.5', p: '50%' },
+        { f: '1/4', d: '0.25', p: '25%' },
+        { f: '3/4', d: '0.75', p: '75%' },
+        { f: '1/5', d: '0.2', p: '20%' },
+        { f: '2/5', d: '0.4', p: '40%' },
+        { f: '3/5', d: '0.6', p: '60%' },
+        { f: '4/5', d: '0.8', p: '80%' },
+        { f: '1/10', d: '0.1', p: '10%' },
+        { f: '3/10', d: '0.3', p: '30%' },
+        { f: '7/10', d: '0.7', p: '70%' },
+        { f: '9/10', d: '0.9', p: '90%' },
+        { f: '1', d: '1.0', p: '100%' }
+    ];
+
+    // 隨機題庫生成（心算友善版）
+    function generateQuestion() {
+        const types = ['fraction_to_decimal', 'decimal_to_percent', 'percent_to_fraction', 'fraction_to_percent', 'decimal_to_fraction'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        let questionText = '';
+        let correctAnswer = '';
+        let wrongAnswers = [];
+
+        const pair = mentalMathPairs[Math.floor(Math.random() * mentalMathPairs.length)];
+
+        switch (type) {
+            case 'fraction_to_decimal':
+                questionText = `${pair.f}`;
+                correctAnswer = pair.d;
+                // 製造高混淆但一眼能心算辨別的錯誤選項
+                wrongAnswers = [
+                    (parseFloat(pair.d) * 10).toFixed(1).replace(/\.0$/, ''), // 放大10倍
+                    (parseFloat(pair.d) / 10).toFixed(2),                    // 縮小10倍
+                    (parseFloat(pair.d) + 0.1).toFixed(2).replace(/\.00$/, '')
+                ];
+                break;
+            case 'decimal_to_percent':
+                questionText = `${pair.d}`;
+                correctAnswer = pair.p;
+                wrongAnswers = [
+                    `${parseFloat(pair.d) * 10}%`,
+                    `${parseFloat(pair.d)}%`,
+                    `${parseFloat(pair.d) / 10}%`
+                ];
+                break;
+            case 'percent_to_fraction':
+                questionText = `${pair.p}`;
+                correctAnswer = pair.f;
+                let [num, den] = pair.f.split('/').map(Number);
+                if (den) {
+                    wrongAnswers = [
+                        `${num}/${den * 2}`,
+                        `${num * 2}/${den}`,
+                        `1/${den + 1}`
+                    ];
+                } else { // 如果是整數 1
+                    wrongAnswers = ['1/10', '1/2', '1/5'];
+                }
+                break;
+            case 'fraction_to_percent':
+                questionText = `${pair.f}`;
+                correctAnswer = pair.p;
+                wrongAnswers = [
+                    `${parseFloat(pair.d) * 10}%`,
+                    `${parseFloat(pair.d)}%`,
+                    `${parseFloat(pair.d) / 10}%`
+                ];
+                break;
+            case 'decimal_to_fraction':
+                questionText = `${pair.d}`;
+                correctAnswer = pair.f;
+                let [n, d] = pair.f.split('/').map(Number);
+                if (d) {
+                    wrongAnswers = [
+                        `${n}/${d * 2}`,
+                        `${n * 2}/${d}`,
+                        `${n}/${d + 2}`
+                    ];
+                } else { // 整數 1.0
+                    wrongAnswers = ['1/10', '1/2', '1/5'];
+                }
+                break;
+        }
+
+        // 過濾干擾項，去除重疊答案與無效值
+        wrongAnswers = [...new Set(wrongAnswers)].filter(ans => ans !== correctAnswer && ans !== "");
+        while(wrongAnswers.length < 3) {
+            wrongAnswers.push((Math.random() * 2).toFixed(1));
+        }
+        wrongAnswers = wrongAnswers.slice(0, 3);
+
+        // 打亂順序
+        const options = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5);
+
+        return {
+            questionText: questionText,
+            correctAnswer: correctAnswer,
+            options: options
+        };
+    }
+
+    // 初始化與更換題目
+    function renderQuestion(playerNum) {
+        const player = gameState.players[playerNum];
+        const q = generateQuestion();
+        player.currentQuestion = q;
+        player.selectedAnswer = null;
+
+        // 重置該邊填空底線
+        const blankSpan = document.getElementById(`p${playerNum}-blank`);
+        if (blankSpan) blankSpan.innerText = "______";
+        
+        document.getElementById(`p${playerNum}-q-text`).innerHTML = `${q.questionText} = <span class="blank-space" id="p${playerNum}-blank">______</span>`;
+
+        // 渲染 4 個心算選項按鈕
+        const optionsContainer = document.getElementById(`p${playerNum}-options`);
+        optionsContainer.innerHTML = '';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.innerText = opt;
+            btn.onclick = function() { selectOption(playerNum, opt, btn); };
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    // 選擇答案選項
+    function selectOption(playerNum, val, btnElement) {
+        const player = gameState.players[playerNum];
+        player.selectedAnswer = val;
+
+        // 更換該側填空內容
+        document.getElementById(`p${playerNum}-blank`).innerText = ` ${val} `;
+
+        // 點選視覺反饋
+        const siblingButtons = document.querySelectorAll(`#p${playerNum}-options .btn-option`);
+        siblingButtons.forEach(btn => btn.classList.remove('selected'));
+        btnElement.classList.add('selected');
+    }
+
+    // 清除選取
+    function clearSelection(playerNum) {
+        const player = gameState.players[playerNum];
+        player.selectedAnswer = null;
+        document.getElementById(`p${playerNum}-blank`).innerText = "______";
+        
+        const siblingButtons = document.querySelectorAll(`#p${playerNum}-options .btn-option`);
+        siblingButtons.forEach(btn => btn.classList.remove('selected'));
+    }
+
+    // 提交答案
+    function submitAnswer(playerNum) {
+        const player = gameState.players[playerNum];
+        if (player.selectedAnswer === null) {
+            alert('請先選擇一個答案！');
+            return;
+        }
+
+        const isCorrect = (player.selectedAnswer === player.currentQuestion.correctAnswer);
+        const sideElement = document.getElementById(`p${playerNum}-side`);
+
+        if (isCorrect) {
+            player.combo++;
+            let damage = 10;
+            let isCrit = false;
+
+            if (player.combo >= 3) {
+                damage = 20; // 暴擊
+                isCrit = true;
+            }
+
+            player.score += isCrit ? 20 : 10;
+            player.monster.hp -= damage;
+
+            showDamageEffect(playerNum, `p${playerNum}-monster`, `-${damage} HP${isCrit ? '🔥暴擊' : ''}`, '#2ed573');
+
+            if (player.monster.hp <= 0) {
+                player.monster.level++;
+                const randomMonster = monsterTemplates[Math.floor(Math.random() * monsterTemplates.length)];
+                player.monster.name = randomMonster.name;
+                player.monster.icon = randomMonster.icon;
+                player.monster.maxHp = 50 + (player.monster.level - 1) * 20;
+                player.monster.hp = player.monster.maxHp;
+
+                document.getElementById(`p${playerNum}-monster-avatar`).innerText = player.monster.icon;
+                document.getElementById(`p${playerNum}-monster-label`).innerText = player.monster.name;
+                
+                showDamageEffect(playerNum, `p${playerNum}-monster`, `Lv.UP 登場!`, '#ffa502');
+            }
+
+            sideElement.classList.add('flash-correct');
+            setTimeout(() => sideElement.classList.remove('flash-correct'), 500);
+
+        } else {
+            player.combo = 0;
+            player.hp -= 15;
+
+            showDamageEffect(playerNum, `p${playerNum}-char`, `-15 HP 💥`, '#ff4757');
+
+            sideElement.classList.add('flash-wrong');
+            setTimeout(() => sideElement.classList.remove('flash-wrong'), 500);
+
+            if (player.hp <= 0) {
+                player.hp = 0;
+                endGame();
+                return;
+            }
+        }
+
+        updateUI(playerNum);
+        renderQuestion(playerNum);
+    }
+
+    // 傷害飄數字效果
+    function showDamageEffect(playerNum, targetId, text, color) {
+        const target = document.getElementById(targetId);
+        const effect = document.createElement('div');
+        effect.className = 'attack-effect';
+        effect.innerText = text;
+        effect.style.color = color;
+        
+        const randomX = Math.floor(Math.random() * 20) - 10;
+        effect.style.left = `calc(50% + ${randomX}px)`;
+        effect.style.top = `10px`;
+
+        target.appendChild(effect);
+        setTimeout(() => effect.remove(), 800);
+    }
+
+    // 更新數據畫面 UI
+    function updateUI(playerNum) {
+        const player = gameState.players[playerNum];
+        
+        document.getElementById(`p${playerNum}-score-val`).innerText = player.score;
+        
+        const comboBadge = document.getElementById(`p${playerNum}-combo-badge`);
+        if (player.combo >= 3) {
+            comboBadge.innerText = `${player.combo} Combo🔥`;
+            comboBadge.style.display = 'inline-block';
+        } else {
+            comboBadge.style.display = 'none';
+        }
+
+        document.getElementById(`p${playerNum}-hp-txt`).innerText = `${player.hp}/100`;
+        document.getElementById(`p${playerNum}-hp-fill`).style.width = `${player.hp}%`;
+
+        document.getElementById(`p${playerNum}-m-lv`).innerText = player.monster.level;
+        document.getElementById(`p${playerNum}-m-hp-txt`).innerText = `${player.monster.hp}/${player.monster.maxHp}`;
+        
+        const mHpPercent = Math.max(0, (player.monster.hp / player.monster.maxHp) * 100);
+        document.getElementById(`p${playerNum}-m-hp-fill`).style.width = `${mHpPercent}%`;
+    }
+
+    // 倒數計時器邏輯
+    function startTimer() {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = setInterval(() => {
+            gameState.timer--;
+            document.getElementById('global-timer').innerText = `${gameState.timer}s`;
+
+            if (gameState.timer <= 15) {
+                document.getElementById('global-timer').style.background = '#ff4757';
+            }
+
+            if (gameState.timer <= 0) {
+                endGame();
+            }
+        }, 1000);
+    }
+
+    // 開始遊戲
+    function startGame() {
+        gameState.timer = 90;
+        gameState.isPlaying = true;
+        
+        for (let i = 1; i <= 2; i++) {
+            gameState.players[i].score = 0;
+            gameState.players[i].hp = 100;
+            gameState.players[i].combo = 0;
+            gameState.players[i].monster = {
+                hp: 50,
+                maxHp: 50,
+                level: 1,
+                name: i === 1 ? '小綠妖' : '噴火龍',
+                icon: i === 1 ? '👾' : '🐲'
+            };
+            
+            document.getElementById(`p${i}-monster-avatar`).innerText = gameState.players[i].monster.icon;
+            document.getElementById(`p${i}-monster-label`).innerText = gameState.players[i].monster.name;
+            
+            updateUI(i);
+            renderQuestion(i);
+        }
+
+        document.getElementById('global-timer').innerText = `90s`;
+        document.getElementById('global-timer').style.background = '#2ed573';
+
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+        
+        startTimer();
+    }
+
+    // 結束遊戲及結算
+    function endGame() {
+        clearInterval(gameState.timerInterval);
+        gameState.isPlaying = false;
+
+        document.getElementById('r1-score').innerText = gameState.players[1].score;
+        document.getElementById('r1-hp').innerText = `${gameState.players[1].hp}/100`;
+        
+        document.getElementById('r2-score').innerText = gameState.players[2].score;
+        document.getElementById('r2-hp').innerText = `${gameState.players[2].hp}/100`;
+
+        let winText = "";
+        const s1 = gameState.players[1].score;
+        const s2 = gameState.players[2].score;
+        const hp1 = gameState.players[1].hp;
+        const hp2 = gameState.players[2].hp;
+
+        if (hp1 === 0 && hp2 === 0) {
+            winText = "雙方同時力竭！平手！";
+        } else if (hp1 === 0) {
+            winText = "🏆 玩家2 法師 獲得最後的勝利！(玩家1戰敗)";
+        } else if (hp2 === 0) {
+            winText = "🏆 玩家1 騎士 獲得最後的勝利！(玩家2戰敗)";
+        } else if (s1 > s2) {
+            winText = "🏆 玩家1 騎士 以更高分奪下勝利！";
+        } else if (s2 > s1) {
+            winText = "🏆 玩家2 法師 以更高分奪下勝利！";
+        } else {
+            winText = "雙方平分秋色！平手！";
+        }
+
+        document.getElementById('winner-text').innerText = winText;
+        document.getElementById('result-screen').classList.remove('hidden');
+    }
+
+    // 說明視窗控制
+    function showRules(show) {
+        const modal = document.getElementById('rules-modal');
+        if (show) {
+            modal.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // 返回主目錄
+    function returnToMenu() {
+        clearInterval(gameState.timerInterval);
+        gameState.isPlaying = false;
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+    }
+
+    // 全屏切換
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                alert(`無法進入全畫面模式: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+</script>
+
+</body>
+</html>
